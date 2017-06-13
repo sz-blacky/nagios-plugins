@@ -99,13 +99,3 @@ Else
 End If
 WScript.Echo outputText(exitStatus) & ": " & output
 WScript.Quit exitStatus
-:install
-
-"C:\Program Files\NSClient++\nscp.exe" settings --set "Check Anti-virus" --path /settings/scheduler/schedules/check_antivirus --key alias
-"C:\Program Files\NSClient++\nscp.exe" settings --set check_antivirus --path /settings/scheduler/schedules/check_antivirus --key command
-"C:\Program Files\NSClient++\nscp.exe" settings --set "30m" --path /settings/scheduler/schedules/check_antivirus --key interval
-"C:\Program Files\NSClient++\nscp.exe" settings --set "NRDP" --path /settings/scheduler/schedules/check_antivirus --key channel
-"C:\Program Files\NSClient++\nscp.exe" settings --set "scripts\\check_antivirus.vbs" --path "/settings/external scripts/wrapped scripts" --key "check_antivirus"
-
-net stop nscp
-net start nscp

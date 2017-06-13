@@ -82,7 +82,7 @@ Else
 				exitStatus = 1
 			End If
 				
-			If productState = "10" Then
+			If CInt(productState) >= 10 Then
 				productStateText = "is enabled"
 			Else
 				productStateText = "is not running"

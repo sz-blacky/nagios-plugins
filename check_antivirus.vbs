@@ -52,7 +52,7 @@ Function GetSecurityCenter2NameSpace()
 End Function
 
 Dim oWMI, colItems, objItem, strComputer, exitStatus
-Dim signatureStatusText, productStateText, antiVirusFound
+Dim signatureStatusText, productStateText, antiVirusFound, activeAntiVirusFound
 Dim productStateString, providerType, productState, signatureStatus
 Dim output
 Dim outputText
@@ -66,6 +66,7 @@ Else
 	Set colItems = oWMI.ExecQuery("Select * from AntiVirusProduct")
 	exitStatus = 0
 	antiVirusFound = false
+	activeAntiVirusFound = false
 	output = ""
 	For Each objItem in colItems
 		productStateString = LPad(ntoa(objItem.productState, 16), 6, "0")
@@ -84,14 +85,18 @@ Else
 				
 			If CInt(productState) >= 10 Then
 				productStateText = "is enabled"
+                activeAntiVirusFound = true
 			Else
 				productStateText = "is not running"
-				exitStatus = 2
 			End If
 			output = output & objItem.displayName & " " & productStateText & " and " & signatureStatusText & vbCrLf
 		End If
 	Next
 
+	If Not activeAntiVirusFound Then
+        exitStatus = 2
+    End If
+	
 	If Not antiVirusFound Then
 		output = "No anti-virus product found"
 		exitStatus = 2

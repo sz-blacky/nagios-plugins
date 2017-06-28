@@ -51,17 +51,17 @@ class CheckBurp(object):
         print '{0} CRITICAL - {1}'.format(self._nick, msg)
         sys.exit(self._critical)
 
-    def critical(self, msg):
-        self.criticals.append('{0} CRITICAL - {1}'.format(self._nick, msg))
+    def critical(self, msg, sort_key):
+	    self.criticals.append(Message('{0} CRITICAL - {1}'.format(self._nick, msg), sort_key))
 
-    def warning(self, msg):
-        self.warnings.append('{0} WARNING - {1}'.format(self._nick, msg))
+    def warning(self, msg, sort_key):
+	    self.warnings.append(Message('{0} WARNING - {1}'.format(self._nick, msg), sort_key))
 
-    def unknown(self, msg):
-        self.unknowns.append('{0} UNKNOWN - {1}'.format(self._nick, msg))
+    def unknown(self, msg, sort_key):
+	    self.unknowns.append(Message('{0} UNKNOWN - {1}'.format(self._nick, msg), sort_key))
         
-    def ok(self, msg):
-        self.oks.append('{0} OK - {1}'.format(self._nick, msg))
+    def ok(self, msg, sort_key):
+	    self.oks.append(Message('{0} OK - {1}'.format(self._nick, msg), sort_key))
 
     def opt_parser(self):
         parser = argparse.ArgumentParser(
@@ -108,15 +108,15 @@ class CheckBurp(object):
         ftimestamp = bckpdircur + '/timestamp'
         if not os.path.isdir(bckpdir):
             self.critical(('Host backup directory {0}'
-                           ' does not exists').format(bckpdir))
+                           ' does not exists').format(bckpdir), sys.maxint)
             return
         if not os.path.isdir(bckpdircur):
             self.critical(('Current Host backup directory {0}'
-                           ' does not exists').format(bckpdircur))
+                           ' does not exists').format(bckpdircur), sys.maxint)
             return
         if not os.path.isfile(ftimestamp):
             self.critical(('timestamp file '
-                           'does not exists ({0})').format(ftimestamp))
+                           'does not exists ({0})').format(ftimestamp), sys.maxint)
             return
         lines = []
         with open(ftimestamp) as f:
@@ -124,13 +124,13 @@ class CheckBurp(object):
 
         if not len(lines):
             self.critical(('timestamp file seems'
-                           ' to be empty ({0})').format(ftimestamp))
+                           ' to be empty ({0})').format(ftimestamp), sys.maxint)
 
         tline = lines.pop()
         parts = tline.split()
         if not 3 == len(parts):
             self.critical(('invalid syntax in '
-                           'timestamp file ({0})').format(ftimestamp))
+                           'timestamp file ({0})').format(ftimestamp), sys.maxint)
 
         btime = time.strptime(parts[1] + ' ' + parts[2], "%Y-%m-%d %H:%M:%S")
         btime = datetime.datetime(*btime[:6])
@@ -148,19 +148,20 @@ class CheckBurp(object):
                                '{1} ({2}>={3})').format(hostname,
                                                         diff_human,
                                                         diff_min,
-                                                        self.args['critical']))
+                                                        self.args['critical']), diff.total_seconds())
             else:
                 self.warning(('Last backup of {0} starts to get old: '
                               '{1} ({2}>={3})').format(hostname,
                                                        diff_human,
                                                        diff_min,
-                                                       self.args['warning']))
+                                                       self.args['warning']), diff.total_seconds())
         else:
             self.ok(('Last backup of {0} is fresh enough: '
                      '{1} ({2}<{3})').format(hostname,
                                              diff_human,
                                              diff_min,
-                                             self.args['warning']))
+                                             self.args['warning']), diff.total_seconds())
+
     def run(self):
         self.opt_parser()
         self.test_backup_dir()
@@ -171,8 +172,9 @@ class CheckBurp(object):
         else:
             self.unknown('No backup directories found')
         for collection in [self.criticals, self.warnings, self.unknowns, self.oks]:
+            collection.sort(key = lambda message: message.key, reverse = True)
             for message in collection:
-                print message
+                print message.message
         if len(self.criticals) > 0:
             sys.exit(self._critical)
         if len(self.warnings) > 0:
@@ -180,6 +182,11 @@ class CheckBurp(object):
         if len(self.unknowns) > 0:
             sys.exit(self._unknown)
         sys.exit(self._ok)
+
+class Message:
+    def __init__(self, message, sort_key):
+        self.message = message
+        self.key = sort_key
 
 def main():
     try:

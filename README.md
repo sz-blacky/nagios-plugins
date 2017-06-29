@@ -9,3 +9,7 @@ check_burp_backup_ages.py
 =========================
 Checks a Burp spool directory for old backups. Based on check_burp_backup_age by regilero
 (https://github.com/regilero/check_burp_backup_age)
+
+check_input-devices.vbs
+=======================
+Check that at least one keyboard and one mouse is connected to the system.
